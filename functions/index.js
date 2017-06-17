@@ -11,12 +11,12 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
   .onWrite(event => {
     console.log('Recalculating crime percentages for new message', event.params.pushId);    
     var result = {}; 
-    admin.database().ref('/crimedata').orderByKey().once('value', snapshot => {
-      console.log(snapshot.key);
-      if (result[snapshot.val().offense_code_group]) {
-        result[snapshot.val().offense_code_group]+= 1;
+    admin.database().ref('/crimedata').child('offense_code_group').orderByKey().once('value', snapshot => {
+      console.log('Offense Code Group:', snapshot.key);
+      if (result[snapshot.val()]) {
+        result[snapshot.val()]+= 1;
       } else {
-        result[snapshot.val().offense_code_group] = 1;
+        result[crimeSnapshot.val().offense_code_group] = 1;
       }
     });
 
