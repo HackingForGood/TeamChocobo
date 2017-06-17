@@ -112,16 +112,47 @@
 
         // Listen for clicks and add the location of the click to firebase.
         map.addListener('click', function(e) {
+          var locationCrimeData = [];
+          
           data.lat = e.latLng.lat().toFixed(4);
           data.lng = e.latLng.lng().toFixed(4);
-          console.log(`lat: ${data.lat}, lon: ${data.lng}`);
+          
+          var contentString = '<div id="content">'+
+          '<div id="siteNotice">'+
+          '</div>';
+          
           heatmap.aux.forEach(crimeData => {
             var lat = parseFloat(crimeData.lat).toFixed(4);
             var lng = parseFloat(crimeData.long).toFixed(4);
-            if (lat == data.lat && data.lng == lng) {
+            if (Math.abs(lat-data.lat) < .0005 && Math.abs(data.lng-lng) < .0005 ) {
+              locationCrimeData.push(crimeData);
               console.log(crimeData);
+              
+              contentString += '<h1 id="firstHeading" class="firstHeading">' + `Crime Type: ${crimeData.offense_description}` + '</h1>'+
+                  '<div id="bodyContent">'+
+                  '<p><b>Crime Severity: ' + `${crimeData.severity}` + '</b>,'  +
+                  'Crime occured on date:' + `${crimeData.occurred_on_date} on a ${crimeData.day_of_week} `
+                  '</p>';
             }
           });
+          
+          
+          contentString +='</div>'+'</div>';
+          
+          var infowindow = new google.maps.InfoWindow({
+              content: contentString
+          });
+            
+          // add a new marker to the current location
+          var marker = new google.maps.Marker({
+            position: e.latLng,
+            map: map,
+          });
+          
+          marker.addListener('click', function() {
+            infowindow.open(map, marker);
+          });
+          
         });
 
         initAuthentication(initFirebase.bind(undefined, heatmap));
