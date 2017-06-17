@@ -16,6 +16,7 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
       return;
     }
 
+    console.log("Processing code group write:", event.data.val());
     var ocgRef = admin.database().ref('analytics/offense_code_group/');
     return ocgRef.transaction(current_value => {
       if (current_value[event.data.val()]) {
@@ -26,7 +27,7 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
         current_value[event.data.val()] = 1;
       }
 
-      if (even.data.previous.exists()) {
+      if (event.data.previous.exists()) {
         if (current_value[event.data.previous.val()]) {
           console.log("Decrementing", event.data.previous.val());
           current_value[event.data.previous.val()]-= 1;
