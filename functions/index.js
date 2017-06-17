@@ -43,12 +43,15 @@ exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
   return query.once('value')
     .then(snapshot => {
       console.log("Got snapshot:", snapshot.key);
+      var waitingFor = [];
       snapshot.forEach(child => {
         console.log("Backfilling", child.key);
-        updateCrimePercentage(child.val().offense_code_group, null, false);
+        waitingFor.push(updateCrimePercentage(child.val().offense_code_group, null, false));
       });
 
       resp.status(200).send("Backfill complete!");
+    
+      return Promise.all(waitingFor);
     });
 });
 
