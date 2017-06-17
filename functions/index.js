@@ -10,18 +10,18 @@ admin.initializeApp(functions.config().firebase);
 exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/offense_code_group')
   .onWrite(event => {
     console.log('Recalculating crime percentages for new message', event.params.pushId);    
-    var result = {}; 
-    admin.database().ref('/crimedata').orderByKey().once('value', snapshot => {
-      console.log("Processing", snapshot.key);
-      if (result[snapshot.val().offense_code_group]) {
-        result[snapshot.val().offense_code_group]+= 1;
-      } else {
-        result[snapshot.val().offense_code_group] = 1;
-      }
-    });
+    // Only edit data when it is first created.
+    if (event.data.previous.exists() && event.data.val() === event.data.previous.val()) {
+      console.log('Skipping update to same value');
+      return;
+    }
 
-    console.log("Results:", result);
-    admin.database().ref('/analytics').set(result);
+    var dbPath = 'analytics/offense_code_group/' + event.data.val();
+    console.log('Grabbing reference to:', dbPath);
+    var ocgRef = db.ref(dbPath);
+    return ocgRef.transaction(current_value => {
+      return (current_value || 0) + 1;
+    });
   });
 
 exports.computeSeverityLevel = functions.database.ref('crimedata/{pushId}/offense_code_group')
