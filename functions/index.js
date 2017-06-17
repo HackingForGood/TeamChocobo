@@ -76,6 +76,7 @@ exports.backfillSeverity = functions.https.onRequest((req, resp) => {
         console.log("Backfilling", child.key);
         var ocg = child.val().offense_code_group;
         if (!ocg) {
+          console.log("Could not read offense_code_group for", child.key);
           return;
         }
 
