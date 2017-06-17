@@ -27,7 +27,7 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
       }
 
       if (even.data.previous.exists()) {
-        if (current_value[event.data.previous.val()] {
+        if (current_value[event.data.previous.val()]) {
           console.log("Decrementing", event.data.previous.val());
           current_value[event.data.previous.val()]-= 1;
           if (current_value[event.data.previous.val()] <= 0) {
