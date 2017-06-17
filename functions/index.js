@@ -86,7 +86,7 @@ exports.backfillSeverity = functions.https.onRequest((req, resp) => {
         result[child.key] = obj;
       });
 
-      var ocgRef = admin.database().ref('crimedata2');
+      var ocgRef = admin.database().ref('crimedata');
       ocgRef.transaction(current => result).then(() => resp.status(200).send("Backfill complete"));
     });
 });
