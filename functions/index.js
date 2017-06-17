@@ -61,6 +61,8 @@ function updateCrimePercentage(current, previous, previous_exists) {
       return current_value;
     }
 
+    // sanitize it a little bit
+    current = current.replace(/\//g, "-");
     if (current_value.hasOwnProperty(current)) {
       console.log("Incrementing", current);
       current_value[current]+= 1;
