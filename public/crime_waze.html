@@ -19,6 +19,7 @@
     <div id='map'></div>
 
     <script src='https://www.gstatic.com/firebasejs/4.1.2/firebase.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
     <script>
       // Initialize Firebase
       var config = {
@@ -112,47 +113,46 @@
 
         // Listen for clicks and add the location of the click to firebase.
         map.addListener('click', function(e) {
-          var locationCrimeData = [];
-          
           data.lat = e.latLng.lat().toFixed(4);
           data.lng = e.latLng.lng().toFixed(4);
           
-          var contentString = '<div id="content">'+
-          '<div id="siteNotice">'+
-          '</div>';
+          var showMarker = false;
+          var contentString = '<div>';
           
+          var TOLERANCE = 0.005;
           heatmap.aux.forEach(crimeData => {
             var lat = parseFloat(crimeData.lat).toFixed(4);
             var lng = parseFloat(crimeData.long).toFixed(4);
-            if (Math.abs(lat-data.lat) < .0005 && Math.abs(data.lng-lng) < .0005 ) {
-              locationCrimeData.push(crimeData);
+            if (Math.abs(lat-data.lat) < TOLERANCE && Math.abs(data.lng-lng) < TOLERANCE ) {
+              showMarker = true;
               console.log(crimeData);
               
-              contentString += '<h1 id="firstHeading" class="firstHeading">' + `Crime Type: ${crimeData.offense_description}` + '</h1>'+
-                  '<div id="bodyContent">'+
-                  '<p><b>Crime Severity: ' + `${crimeData.severity}` + '</b>,'  +
-                  'Crime occured on date:' + `${crimeData.occurred_on_date} on a ${crimeData.day_of_week} `
-                  '</p>';
+              contentString += 
+                `<h1>Crime Type: ${crimeData.offense_description}</h1>` +
+                '<div>' +
+                `<p><b>Crime Severity: ${crimeData.severity}</b>, ` +
+                `Crime occured on: ${moment(crimeData.occurred_on_date).format("dddd, MMMM Do YYYY, h:mm:ss a")}` +
+                '</p>';
             }
           });
           
-          
-          contentString +='</div>'+'</div>';
+          contentString += '</div></div>';
           
           var infowindow = new google.maps.InfoWindow({
               content: contentString
           });
             
           // add a new marker to the current location
-          var marker = new google.maps.Marker({
-            position: e.latLng,
-            map: map,
-          });
+          if (showMarker) {
+            var marker = new google.maps.Marker({
+              position: e.latLng,
+              map: map,
+            });
           
-          marker.addListener('click', function() {
-            infowindow.open(map, marker);
-          });
-          
+            marker.addListener('click', function() {
+              infowindow.open(map, marker);
+            });
+          }
         });
 
         initAuthentication(initFirebase.bind(undefined, heatmap));
@@ -195,21 +195,49 @@
             heatmap.getData().push(point);
             heatmap.aux.push(childData);
           });
+
+          // heatmap.aux.forEach(function(crimeData) {
+          //   var marker = new google.maps.Marker({
+          //       position: new google.maps.LatLng(crimeData.lat, crimeData.lng),
+          //       map: map
+          //   });
+
+          //   var contentString = 
+          //     '<div>'
+          //     '<h1>' + 
+          //     `Crime Type: ${crimeData.offense_description}` + 
+          //     '</h1>' +
+          //     '<div>' +
+          //     '<p>' +
+          //     `<b>Crime Severity: ${crimeData.severity}</b>,` +
+          //     `Crime occured on date: ${crimeData.occurred_on_date} on a ${crimeData.day_of_week}` +
+          //     '</p>' +
+          //     '</div>' + 
+          //     '</div>';
+
+          //   var infoWindow = new google.maps.InfoWindow({
+          //       content: contentString
+          //   });
+
+          //   marker.addListener("click", function() { 
+          //       infoWindow.open(map, marker);
+          //   });
+          // });
         });
 
         // Listener for when a click is added.
-        // clicks.orderByChild('timestamp').startAt(startTime).on('child_added',
-        //   function(snapshot) {
+        clicks.orderByChild('timestamp').startAt(startTime).on('child_added',
+          function(snapshot) {
 
-        //     // Get that click from firebase.
-        //     var newPosition = snapshot.val();
-        //     var point = new google.maps.LatLng(newPosition.lat, newPosition.lng);
-        //     var elapsed = new Date().getTime() - newPosition.timestamp;
+            // Get that click from firebase.
+            var newPosition = snapshot.val();
+            var point = new google.maps.LatLng(newPosition.lat, newPosition.lng);
+            var elapsed = new Date().getTime() - newPosition.timestamp;
 
-        //     // Add the point to the heatmap.
-        //     heatmap.getData().push(point);
-        //   }
-        // );
+            // Add the point to the heatmap.
+            heatmap.getData().push(point);
+          }
+        );
 
         // Remove old data from the heatmap when a point is removed from firebase.
         // clicks.on('child_removed', function(snapshot, prevChildKey) {
