@@ -12,7 +12,7 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}')
     console.log('Recalculating crime percentages for new message', event.params.pushId);    
   });
 
-exports.computeSeverityLevel = functions.database.ref('crimedata/pushId}/offense_code_group')
+exports.computeSeverityLevel = functions.database.ref('crimedata/{pushId}/offense_code_group')
   .onWrite(event => {
     console.log('Calculating severity level for', event.params.pushId);
     
