@@ -141,14 +141,15 @@
         var clicks = heatmapDb.child('clicks');
 
         var crimeLogDb = firebaseDb.ref('crimedata');
+        var crimeTypeDb = firebaseDb.ref('analytics/offense_code_group');
+        
+        crimeTypeDb.on('child_added', function(data) {
+          console.log(`crime_type: ${data.key}, count: ${data.val()}`);
+        });
 
-        // var crimeTypeDb = firebaseDb.ref('analytics');
-
-        // var crimeTypeDb.on('offence_code_group', function(group) {
-        //   offence_code_group.forEach(function(offense) {
-        //     console.log(offense);
-        //   });
-        // });
+        crimeTypeDb.on('child_removed', function(data) {
+          console.log(`crime_type: ${data.key}, count: ${data.val()}`);
+        });
         
         crimeLogDb.on('value', function(snapshot) {
           snapshot.forEach(function(childSnapshot) {
