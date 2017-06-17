@@ -20,10 +20,10 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
         console.log('Incrementing', snapshot.val());
         result[snapshot.val()] = 1;
       }
+    }).then(snapshot => {
+      console.log("Results:", result);
+      admin.database().ref('/analytics').set(result);
     });
-
-    console.log("Results:", result);
-    admin.database().ref('/analytics').set(result);
   });
 
 exports.computeSeverityLevel = functions.database.ref('crimedata/{pushId}/offense_code_group')
