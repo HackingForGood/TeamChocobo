@@ -42,6 +42,7 @@ exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
   var query = admin.database().ref('/crimedata').orderByKey();
   return query.once('value')
     .then(snapshot => {
+      console.log("Got snapshot:", snapshot.key);
       snapshot.forEach(child => {
         console.log("Backfilling", child.key);
         updateCrimePercentage(child.val().offense_code_group, null, false);
@@ -55,6 +56,7 @@ function updateCrimePercentage(current, previous, previous_exists) {
   var ocgRef = admin.database().ref('analytics/offense_code_group');
   return ocgRef.transaction(current_value => {
     if (!current_value) {
+      console.log("Got null current_value, skipping");
       return current_value;
     }
 
