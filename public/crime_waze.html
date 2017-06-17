@@ -199,8 +199,8 @@
             var childData = childSnapshot.val();
             var elapsed = 1 - ((new Date().getTime() - new Date(childData.occurred_on_date).getTime()) / 70000000000);
             console.log(elapsed);
-            if(typeof(childData.Severity) != "undefined"){
-              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:childData.Severity*elapsed};
+            if(typeof(childData.severity) != "undefined"){
+              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:childData.severity*elapsed};
             }
             else{
               var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:0.5*elapsed};

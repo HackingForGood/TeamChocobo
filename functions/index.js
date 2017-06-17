@@ -86,7 +86,7 @@ exports.backfillSeverity = functions.https.onRequest((req, resp) => {
         result[child.key] = obj;
       });
 
-      var ocgRef = admin.database().ref('crimedata2');
+      var ocgRef = admin.database().ref('crimedata');
       ocgRef.transaction(current => result).then(() => resp.status(200).send("Backfill complete"));
     });
 });
@@ -126,7 +126,7 @@ function updateCrimePercentage(current, previous, previous_exists) {
 exports.computeSeverityLevel = functions.database.ref('crimedata/{pushId}/offense_code_group')
   .onWrite(event => {
     console.log('Calculating severity level for', event.params.pushId);
-    return event.data.ref.parent.child('Severity').set(severDict[event.data.val().replace(/\//g, " ")]);  
+    return event.data.ref.parent.child('severity').set(severDict[event.data.val().replace(/\//g, " ")]);  
   });
 
   
