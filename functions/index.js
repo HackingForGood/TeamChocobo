@@ -40,20 +40,26 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
 
 exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
   var query = admin.database().ref('/crimedata').orderByKey();
-  query.once('value')
+  return query.once('value')
     .then(snapshot => {
+      console.log("Got snapshot:", snapshot.key);
       snapshot.forEach(child => {
         console.log("Backfilling", child.key);
         updateCrimePercentage(child.val().offense_code_group, null, false);
       });
 
-      resp.end();
+      resp.status(200).send("Backfill complete!");
     });
 });
 
 function updateCrimePercentage(current, previous, previous_exists) {
   var ocgRef = admin.database().ref('analytics/offense_code_group');
   return ocgRef.transaction(current_value => {
+    if (!current_value) {
+      console.log("Got null current_value, skipping");
+      return current_value;
+    }
+
     if (current_value.hasOwnProperty(current)) {
       console.log("Incrementing", current);
       current_value[current]+= 1;
