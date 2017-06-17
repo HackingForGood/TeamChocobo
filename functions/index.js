@@ -7,9 +7,20 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
-exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}')
+exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/offense_code_group')
   .onWrite(event => {
     console.log('Recalculating crime percentages for new message', event.params.pushId);    
+    var result = {}; 
+    admin.database().ref('/crimedata').orderBykey().once('value', entry => {
+      if (result[entry.offense_code_group]) {
+        result[entry.offense_code_group]+= 1;
+      } else {
+        result[entry.offense_code_group] = 1;
+      }
+    });
+
+    console.log("Results:", result);
+    admin.database().ref('/analytics').set(result);
   });
 
 exports.computeSeverityLevel = functions.database.ref('crimedata/{pushId}/offense_code_group')
