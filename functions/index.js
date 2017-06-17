@@ -17,7 +17,7 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
     }
 
     console.log("Processing code group write:", event.data.val());
-    var ocgRef = admin.database().ref('analytics/offense_code_group/');
+    var ocgRef = admin.database().ref('analytics/offense_code_group');
     return ocgRef.transaction(current_value => {
       if (current_value[event.data.val()]) {
         console.log("Incrementing", event.data.val());
