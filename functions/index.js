@@ -12,7 +12,7 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
     console.log('Recalculating crime percentages for new message', event.params.pushId);    
     var result = {}; 
     admin.database().ref('/crimedata').child('offense_code_group').orderByKey().once('value', snapshot => {
-      console.log('Offense Code Group:', snapshot.key);
+      console.log('Offense Code Group:', snapshot.val());
       if (result[snapshot.val()]) {
         console.log('Incrementing', snapshot.val());
         result[snapshot.val()]+= 1;
