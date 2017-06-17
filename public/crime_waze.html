@@ -131,7 +131,7 @@
                 `<h1>Crime Type: ${crimeData.offense_description}</h1>` +
                 '<div>' +
                 `<p><b>Crime Severity: ${crimeData.severity}</b>, ` +
-                `Crime occured on: ${moment(crimeData.occurred_on_date).format("dddd, MMMM Do YYYY, h:mm:ss a")}` +
+                `<p>Crime Date: ${moment(crimeData.occurred_on_date).format("dddd, MMMM Do YYYY, h:mm:ss a")}` +
                 '</p>';
             }
           });
