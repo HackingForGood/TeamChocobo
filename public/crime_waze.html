@@ -89,7 +89,7 @@
       function initMap(loc) {
         var map = new google.maps.Map(document.getElementById('map'), {
           center: loc,
-          zoom: 11,
+          zoom: 15,
           styles: [{
             featureType: 'poi',
             stylers: [{ visibility: 'off' }]  // Turn off POI.
@@ -104,9 +104,9 @@
 
         // Create the DIV to hold the control and call the makeInfoBox() constructor
         // passing in this DIV.
-        var infoBoxDiv = document.createElement('div');
-        makeInfoBox(infoBoxDiv, map);
-        map.controls[google.maps.ControlPosition.TOP_CENTER].push(infoBoxDiv);
+        // var infoBoxDiv = document.createElement('div');
+        // makeInfoBox(infoBoxDiv, map);
+        // map.controls[google.maps.ControlPosition.TOP_CENTER].push(infoBoxDiv);
 
         // Create a heatmap.
         var heatmap = new google.maps.visualization.HeatmapLayer({
@@ -189,53 +189,25 @@
         crimeTypeDb.on('child_added', data => {
           console.log(`crime_type: ${data.key}, count: ${data.val()}`);
         });
-
-        crimeTypeDb.on('child_removed', data => {
-          console.log(`crime_type: ${data.key}, count: ${data.val()}`);
-        });
         
         crimeLogDb.on('value', snapshot => {
           snapshot.forEach(childSnapshot => {
             var childData = childSnapshot.val();
             var elapsed = 1 - ((new Date().getTime() - new Date(childData.occurred_on_date).getTime()) / 70000000000);
             console.log(elapsed);
-            if(typeof(childData.severity) != "undefined"){
-              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:childData.severity*elapsed};
+            if(typeof(childData.severity) != "undefined") {
+              var point = {
+                location : new google.maps.LatLng(childData.lat, childData.long), weight:childData.severity*elapsed
+              };
             }
             else{
-              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:0.5*elapsed};
+              var point = {
+                location : new google.maps.LatLng(childData.lat, childData.long), weight:0.5*elapsed
+              };
             }
             heatmap.getData().push(point);
             heatmap.aux.push(childData);
           });
-
-          // heatmap.aux.forEach(function(crimeData) {
-          //   var marker = new google.maps.Marker({
-          //       position: new google.maps.LatLng(crimeData.lat, crimeData.lng),
-          //       map: map
-          //   });
-
-          //   var contentString = 
-          //     '<div>'
-          //     '<h1>' + 
-          //     `Crime Type: ${crimeData.offense_description}` + 
-          //     '</h1>' +
-          //     '<div>' +
-          //     '<p>' +
-          //     `<b>Crime Severity: ${crimeData.severity}</b>,` +
-          //     `Crime occured on date: ${crimeData.occurred_on_date} on a ${crimeData.day_of_week}` +
-          //     '</p>' +
-          //     '</div>' + 
-          //     '</div>';
-
-          //   var infoWindow = new google.maps.InfoWindow({
-          //       content: contentString
-          //   });
-
-          //   marker.addListener("click", function() { 
-          //       infoWindow.open(map, marker);
-          //   });
-          // });
         });
 
         // Listener for when a click is added.
