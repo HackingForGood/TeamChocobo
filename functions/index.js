@@ -126,7 +126,7 @@ function updateCrimePercentage(current, previous, previous_exists) {
 exports.computeSeverityLevel = functions.database.ref('crimedata/{pushId}/offense_code_group')
   .onWrite(event => {
     console.log('Calculating severity level for', event.params.pushId);
-    return event.data.ref.parent.child('Severity').set(severDict[event.data.val().replace(/\//g, " ")]);  
+    return event.data.ref.parent.child('severity').set(severDict[event.data.val().replace(/\//g, " ")]);  
   });
 
   
