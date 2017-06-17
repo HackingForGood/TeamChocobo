@@ -46,7 +46,12 @@ exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
       var result = {};
       snapshot.forEach(child => {
         console.log("Backfilling", child.key);
-        var current = child.val().offense_code_group.replace(/\//g, "-");
+        var ocg = child.val().offense_code_group;
+        if (!ocg) {
+          return;
+        }
+
+        var current = ocg.replace(/\//g, "-");
         if (result.hasOwnProperty(current)) {
           console.log("Incrementing", current);
           result[current]+= 1;
