@@ -57,7 +57,7 @@ exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
       });
 
       var ocgRef = admin.database().ref('analytics/offense_code_group');
-      ocgRef.transaction(current => result).then(() => resp.status(200).send("Backfill complete");
+      ocgRef.transaction(current => result).then(() => resp.status(200).send("Backfill complete"));
     });
 });
 
