@@ -10,19 +10,15 @@ admin.initializeApp(functions.config().firebase);
 exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/offense_code_group')
   .onWrite(event => {
     console.log('Recalculating crime percentages for new message', event.params.pushId);    
-    var result = {}; 
-    admin.database().ref('/crimedata').child('offense_code_group').orderByKey().once('value', snapshot => {
-      console.log('Offense Code Group:', snapshot.val());
-      if (result[snapshot.val()]) {
-        console.log('Incrementing', snapshot.val());
-        result[snapshot.val()]+= 1;
-      } else {
-        console.log('Incrementing', snapshot.val());
-        result[snapshot.val()] = 1;
-      }
-    }).then(snapshot => {
-      console.log("Results:", result);
-      admin.database().ref('/analytics').set(result);
+    // Only edit data when it is first created.
+    if (event.data.previous.exists() && event.data.val() === event.data.previous.val()) {
+      console.log('Skipping update to same value');
+      return;
+    }
+
+    var ocgRef = db.ref("analytics/offense_code_group/" + data.val());
+    return ocgRef.transaction(current_value => {
+      return (current_value || 0) + 1;
     });
   });
 
