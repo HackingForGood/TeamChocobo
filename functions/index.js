@@ -17,7 +17,7 @@ var severDict = {'Larceny From Motor Vehicle' : 0.7, 'Harassment' : 0.8, 'Missin
                  'Residential Burglary' : 0.7, 'Missing Person Located' : 0.1, 'Sex Offender Registration' : 0.9,       
                  'Fraud' : 0.3, 'Confidence Games' : 0.1, 'Evading Fare' : 0.2, 'Auto Theft Recovery' : 0.8,
                  'Assembly or Gathering Violations Other Burglary' : 0.7, 'Indecent Assault' : 0.9,
-                 'Property Found' : 0.1, 'License Violation' : 0.3, 'Landlord/Tenant Disputes' : 0.4,
+                 'Property Found' : 0.1, 'License Violation' : 0.3, 'Landlord Tenant Disputes' : 0.4,
                  'Fire Related Reports' : 0.9, 'Operating Under the Influence' : 0.6, 'Service' : 0.1,
                  'Search Warrants' : 0.2, 'Property Related Damage' : 0.6, 'Prisoner Related Incidents' : 0.9,
                  'Offenses Against Child / Family  Harbor Related Incidents' : 0.9 }
@@ -51,7 +51,7 @@ exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
           return;
         }
 
-        var current = ocg.replace(/\//g, "-");
+        var current = ocg.replace(/\//g, " ");
         if (result.hasOwnProperty(current)) {
           console.log("Incrementing", current);
           result[current]+= 1;
@@ -62,6 +62,29 @@ exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
       });
 
       var ocgRef = admin.database().ref('analytics/offense_code_group');
+      ocgRef.transaction(current => result).then(() => resp.status(200).send("Backfill complete"));
+    });
+});
+
+exports.backfillSeverity = functions.https.onRequest((req, resp) => {
+  var query = admin.database().ref('/crimedata').orderByKey();
+  return query.once('value')
+    .then(snapshot => {
+      console.log("Got snapshot:", snapshot.key);
+      var result = {};
+      snapshot.forEach(child => {
+        console.log("Backfilling", child.key);
+        var ocg = child.val().offense_code_group;
+        if (!ocg) {
+          return;
+        }
+
+        var obj = child.val();
+        obj.offense_code_group = ocg.replace(/\//g, " ");
+        result[child.key] = obj;
+      });
+
+      var ocgRef = admin.database().ref('crimedata2');
       ocgRef.transaction(current => result).then(() => resp.status(200).send("Backfill complete"));
     });
 });
@@ -101,8 +124,7 @@ function updateCrimePercentage(current, previous, previous_exists) {
 exports.computeSeverityLevel = functions.database.ref('crimedata/{pushId}/offense_code_group')
   .onWrite(event => {
     console.log('Calculating severity level for', event.params.pushId);
-    
-    return event.data.ref.parent.child('Severity').set(severDict[event.data.val()]);  
+    return event.data.ref.parent.child('Severity').set(severDict[event.data.val().replace(/\//g, " ")]);  
   });
 
   
