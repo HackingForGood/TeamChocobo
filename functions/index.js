@@ -82,7 +82,7 @@ exports.backfillSeverity = functions.https.onRequest((req, resp) => {
 
         var obj = child.val();
         obj.offense_code_group = ocg.replace(/\//g, " ");
-        obj.severity = severDict[obj.offense_code_group];
+        obj.severity = severDict[obj.offense_code_group] || "unknown";
         result[child.key] = obj;
       });
 
