@@ -134,7 +134,7 @@
           heatmap.aux.forEach(crimeData => {
             var lat = parseFloat(crimeData.lat).toFixed(4);
             var lng = parseFloat(crimeData.long).toFixed(4);
-            if (Math.abs(lat-data.lat) < TOLERANCE && Math.abs(data.lng-lng) < TOLERANCE ) {
+            if (Math.abs(lat-data.lat) < TOLERANCE && Math.abs(data.lng-lng) < TOLERANCE) {
               showMarker = true;
               console.log(crimeData);
               
@@ -149,7 +149,7 @@
           contentString += '</div></div>';
           
           var infowindow = new google.maps.InfoWindow({
-              content: contentString
+            content: contentString
           });
             
           // add a new marker to the current location
