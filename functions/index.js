@@ -21,7 +21,7 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
     var ocgRef = admin.database().ref(dbPath);
     return ocgRef.transaction(current_value => {
       return (current_value || 0) + 1;
-    });
+    }).then(() => console.log("Transaction committed"));
   });
 
 exports.computeSeverityLevel = functions.database.ref('crimedata/{pushId}/offense_code_group')
