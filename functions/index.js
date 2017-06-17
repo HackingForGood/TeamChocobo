@@ -11,16 +11,32 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
   .onWrite(event => {
     console.log('Recalculating crime percentages for new message', event.params.pushId);    
     // Only edit data when it is first created.
-    if (event.data.previous.exists() && event.data.val() === event.data.previous.val()) {
+    if (!event.data.changed()) {
       console.log('Skipping update to same value');
       return;
     }
 
-    var dbPath = 'analytics/offense_code_group/' + event.data.val();
-    console.log('Grabbing reference to:', dbPath);
-    var ocgRef = admin.database().ref(dbPath);
+    var ocgRef = admin.database().ref('analytics/offense_code_group/');
     return ocgRef.transaction(current_value => {
-      return (current_value || 0) + 1;
+      if (current_value[event.data.val()]) {
+        console.log("Incrementing", event.data.val());
+        current_value[event.data.val()]+= 1;
+      } else {
+        console.log("Incrementing", event.data.val());
+        current_value[event.data.val()] = 1;
+      }
+
+      if (even.data.previous.exists()) {
+        if (current_value[event.data.previous.val()] {
+          console.log("Decrementing", event.data.previous.val());
+          current_value[event.data.previous.val()]-= 1;
+          if (current_value[event.data.previous.val()] <= 0) {
+            delete current_value[event.data.previous.val()];
+          }
+        }
+      }
+
+      return current_value;
     }).then(() => console.log("Transaction committed"));
   });
 
