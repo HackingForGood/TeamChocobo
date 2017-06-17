@@ -49,9 +49,7 @@ exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
         waitingFor.push(updateCrimePercentage(child.val().offense_code_group, null, false));
       });
 
-      resp.status(200).send("Backfill complete!");
-    
-      return Promise.all(waitingFor);
+      Promise.all(waitingFor).then(() => resp.end());
     });
 });
 
