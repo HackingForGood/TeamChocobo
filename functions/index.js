@@ -16,30 +16,46 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
       return;
     }
 
-    console.log("Processing code group write:", event.data.val());
-    var ocgRef = admin.database().ref('analytics/offense_code_group');
-    return ocgRef.transaction(current_value => {
-      if (current_value[event.data.val()]) {
-        console.log("Incrementing", event.data.val());
-        current_value[event.data.val()]+= 1;
-      } else {
-        console.log("Incrementing", event.data.val());
-        current_value[event.data.val()] = 1;
-      }
+    return updateCrimePercentage(
+      event.data.val(), 
+      event.data.previous.val(), 
+      event.data.previous.exists());
+  });
 
-      if (event.data.previous.exists()) {
-        if (current_value[event.data.previous.val()]) {
-          console.log("Decrementing", event.data.previous.val());
-          current_value[event.data.previous.val()]-= 1;
-          if (current_value[event.data.previous.val()] <= 0) {
-            delete current_value[event.data.previous.val()];
-          }
+exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
+  admin.database().ref('/crimedata').orderByKey().on('value', snapshot => {
+    snapshot.forEach(child => {
+      updateCrimePercentage(child.offense_code_group, null, false);
+    });
+
+    resp.end();
+  });    
+});
+
+function updateCrimePercentage(current, previous, previous_exists) {
+  var ocgRef = admin.database().ref('analytics/offense_code_group');
+  return ocgRef.transaction(current_value => {
+    if (current_value[current]) {
+      console.log("Incrementing", current);
+      current_value[current]+= 1;
+    } else {
+      console.log("Incrementing", current);
+      current_value[current] = 1;
+    }
+
+    if (previous_exists) {
+      if (current_value[previous]) {
+        console.log("Decrementing", previous);
+        current_value[previous]-= 1;
+        if (current_value[previous] <= 0) {
+          delete current_value[previous];
         }
       }
+    }
 
-      return current_value;
-    }).then(() => console.log("Transaction committed"));
-  });
+    return current_value;
+  }).then(() => console.log("Transaction committed"));
+}
 
 exports.computeSeverityLevel = functions.database.ref('crimedata/{pushId}/offense_code_group')
   .onWrite(event => {
