@@ -154,7 +154,13 @@
         crimeLogDb.on('value', function(snapshot) {
           snapshot.forEach(function(childSnapshot) {
             var childData = childSnapshot.val();
-            var point = new google.maps.LatLng(childData.lat, childData.long);
+            if(typeof(childData.Severity) != "undefined"){
+              console.log(childData.Severity)
+              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:childData.Severity};
+            }
+            else{
+              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:0.5};
+            }
             heatmap.getData().push(point);
             heatmap.aux.push(childData);
           });

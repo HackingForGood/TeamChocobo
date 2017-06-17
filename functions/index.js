@@ -5,22 +5,22 @@ const functions = require('firebase-functions');
 
 // The Firebase Admin SDK to access the Firebase Realtime Database. 
 const admin = require('firebase-admin');
-var severDict = {'Larceny From Motor Vehicle' : 1, 'Harassment' : 2, 'Missing Person Reported' : 3, 
-                 'Larceny' : 4, 'Robbery' : 5, 'Vandalism' : 6, 'Investigate Property': 7,
-                 'Simple Assault' : 8, 'Verbal Disputes' : 9, 'Medical Assistance' : 10, 
-                 'Violations' : 11, 'Drug Violation' : 12, 'Aggravated Assault' : 13,
-                 'Property Lost' : 14, 'Police Service Incidents' : 15, 'Towed' : 16,
-                 'Warrant Arrests' : 17, 'Counterfeiting' : 18, 'Other' : 19,
-                 'Motor Vehicle Accident Response  Disorderly Conduct' : 20,              
-                 'Auto Theft' : 21, 'Recovered Stolen Property' : 22, 'Restraining Order Violations' : 23,    
-                 'Firearm Violations' : 24, 'Commercial Burglary' : 25, 'Investigate Person' : 26,             
-                 'Residential Burglary' : 27, 'Missing Person Located' : 28, 'Sex Offender Registration' : 29,       
-                 'Fraud' : 30, 'Confidence Games' : 31, 'Evading Fare' : 32, 'Auto Theft Recovery' : 33,
-                 'Assembly or Gathering Violations Other Burglary' : 34, 'Indecent Assault' : 35,
-                 'Property Found' : 36, 'License Violation' : 37, 'Landlord/Tenant Disputes' : 38,
-                 'Fire Related Reports' : 39, 'Operating Under the Influence' : 40, 'Service' : 41,
-                 'Search Warrants' : 42, 'Property Related Damage' : 43, 'Prisoner Related Incidents' : 44,
-                 'Offenses Against Child / Family  Harbor Related Incidents' : 45 }
+var severDict = {'Larceny From Motor Vehicle' : 0.7, 'Harassment' : 0.8, 'Missing Person Reported ' : 0.1, 
+                 'Larceny' : 0.7, 'Robbery' : 0.7, 'Vandalism' : 0.6, 'Investigate Property': 0.1,
+                 'Simple Assault' : 0.8, 'Verbal Disputes' : 0.4, 'Medical Assistance' : 0.6, 
+                 'Violations' : 0.5, 'Drug Violation' : 0.5, 'Aggravated Assault' : 0.8,
+                 'Property Lost' : 0.1, 'Police Service Incidents' : 0.5, 'Towed' : 0.2,
+                 'Warrant Arrests' : 0.7, 'Counterfeiting' : 0.3, 'Other' : 0.5,
+                 'Motor Vehicle Accident Response  Disorderly Conduct' : 0.7,              
+                 'Auto Theft' : 0.7, 'Recovered Stolen Property' : 0.1, 'Restraining Order Violations' : 0.4,    
+                 'Firearm Violations' : 0.7, 'Commercial Burglary' : 0.7, 'Investigate Person' : 0.1,             
+                 'Residential Burglary' : 0.7, 'Missing Person Located' : 0.1, 'Sex Offender Registration' : 0.9,       
+                 'Fraud' : 0.3, 'Confidence Games' : 0.1, 'Evading Fare' : 0.2, 'Auto Theft Recovery' : 0.8,
+                 'Assembly or Gathering Violations Other Burglary' : 0.7, 'Indecent Assault' : 0.9,
+                 'Property Found' : 0.1, 'License Violation' : 0.3, 'Landlord/Tenant Disputes' : 0.4,
+                 'Fire Related Reports' : 0.9, 'Operating Under the Influence' : 0.6, 'Service' : 0.1,
+                 'Search Warrants' : 0.2, 'Property Related Damage' : 0.6, 'Prisoner Related Incidents' : 0.9,
+                 'Offenses Against Child / Family  Harbor Related Incidents' : 0.9 }
 admin.initializeApp(functions.config().firebase);
 
 exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/offense_code_group')
