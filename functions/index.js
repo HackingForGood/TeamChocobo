@@ -54,7 +54,7 @@ exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
 function updateCrimePercentage(current, previous, previous_exists) {
   var ocgRef = admin.database().ref('analytics/offense_code_group');
   return ocgRef.transaction(current_value => {
-    if (current_value[current]) {
+    if (current_value.hasOwnProperty(current)) {
       console.log("Incrementing", current);
       current_value[current]+= 1;
     } else {
