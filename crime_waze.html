@@ -93,12 +93,26 @@
         return loc;
       }
 
+      function init() {
+        currLoc = {lat: 0, lng: 0};
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                currLoc = {lat: position.coords.latitude, lng: position.coords.longitude};
+                initMap(currLoc);
+            });
+        } else {
+            console.log("No geolocation services available on this device!");
+            initMap(currLoc);
+        }
+      }
+
       /**
        * Creates a map object with a click listener and a heatmap.
        */
-      function initMap() {
+      function initMap(loc) {
         var map = new google.maps.Map(document.getElementById('map'), {
-          center: {lat: 37.782, lng: -122.443},
+          center: loc,
           zoom: 11,
           styles: [{
             featureType: 'poi',
@@ -127,21 +141,7 @@
 
         // Create a heatmap.
         var heatmap = new google.maps.visualization.HeatmapLayer({
-          data: [{location: new google.maps.LatLng(37.782, -122.447), weight: 0.5},
-                new google.maps.LatLng(37.782, -122.445),
-                {location: new google.maps.LatLng(37.782, -122.443), weight: 2},
-                {location: new google.maps.LatLng(37.782, -122.441), weight: 3},
-                {location: new google.maps.LatLng(37.782, -122.439), weight: 2},
-                new google.maps.LatLng(37.782, -122.437),
-                {location: new google.maps.LatLng(37.782, -122.435), weight: 0.5},
-
-                {location: new google.maps.LatLng(37.785, -122.447), weight: 3},
-                {location: new google.maps.LatLng(37.785, -122.445), weight: 2},
-                new google.maps.LatLng(37.785, -122.443),
-                {location: new google.maps.LatLng(37.785, -122.441), weight: 0.5},
-                new google.maps.LatLng(37.785, -122.439),
-                {location: new google.maps.LatLng(37.785, -122.437), weight: 2},
-                {location: new google.maps.LatLng(37.785, -122.435), weight: 3}],
+          data: [],
           map: map,
           radius: 16
         });
@@ -240,7 +240,7 @@
       }
     </script>
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqHi1Rm_zz88oSFE0WMJizhl4Qv1p--Jo&libraries=visualization&callback=initMap">
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqHi1Rm_zz88oSFE0WMJizhl4Qv1p--Jo&libraries=visualization&callback=init">
     </script>
   </body>
 </html>
