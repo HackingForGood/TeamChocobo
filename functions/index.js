@@ -43,13 +43,21 @@ exports.backfillCrimePercentages = functions.https.onRequest((req, resp) => {
   return query.once('value')
     .then(snapshot => {
       console.log("Got snapshot:", snapshot.key);
-      var waitingFor = [];
+      var result = {};
       snapshot.forEach(child => {
         console.log("Backfilling", child.key);
-        waitingFor.push(updateCrimePercentage(child.val().offense_code_group, null, false));
+        current = current.replace(/\//g, "-");
+        if (result.hasOwnProperty(current)) {
+          console.log("Incrementing", current);
+          result[current]+= 1;
+        } else {
+          console.log("Incrementing", current);
+          result[current] = 1;
+        }
       });
 
-      Promise.all(waitingFor).then(() => resp.end());
+      var ocgRef = admin.database().ref('analytics/offense_code_group');
+      ocgRef.transaction(current => result).then(() => resp.status(200).send("Backfill complete");
     });
 });
 
