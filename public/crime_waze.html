@@ -19,6 +19,7 @@
     <div id='map'></div>
 
     <script src='https://www.gstatic.com/firebasejs/4.1.2/firebase.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js'></script>
     <script>
       // Initialize Firebase
       var config = {
@@ -44,6 +45,11 @@
         lng: null
       };
 
+      /**
+      * Keep track of markers on the map (to remove when out of focus)
+      */
+      var activeMarkers = [];
+
       function makeInfoBox(controlDiv, map) {
         // Set CSS for the control border.
         var controlUI = document.createElement('div');
@@ -58,7 +64,7 @@
         firebase.auth()
           .signInAnonymously()
           .then(onAuthSuccess())
-          .catch(function(error) {
+          .catch(error => {
             console.log('Login Failed!', error);
           });
       }
@@ -67,7 +73,7 @@
         currLoc = {lat: 0, lng: 0};
 
         if ('geolocation' in navigator) {
-            navigator.geolocation.getCurrentPosition(function(position) {
+            navigator.geolocation.getCurrentPosition(position => {
                 currLoc = {lat: position.coords.latitude, lng: position.coords.longitude};
                 initMap(currLoc);
             });
@@ -111,48 +117,54 @@
         });
 
         // Listen for clicks and add the location of the click to firebase.
-        map.addListener('click', function(e) {
-          var locationCrimeData = [];
-          
+        map.addListener('click', e => {
+          activeMarkers.forEach(marker => {
+            marker.setMap(null);
+            marker = null;
+          });
+          activeMarkers = [];
+
           data.lat = e.latLng.lat().toFixed(4);
           data.lng = e.latLng.lng().toFixed(4);
           
-          var contentString = '<div id="content">'+
-          '<div id="siteNotice">'+
-          '</div>';
+          var showMarker = false;
+          var contentString = '<div>';
           
+          var TOLERANCE = 0.005;
           heatmap.aux.forEach(crimeData => {
             var lat = parseFloat(crimeData.lat).toFixed(4);
             var lng = parseFloat(crimeData.long).toFixed(4);
-            if (Math.abs(lat-data.lat) < .0005 && Math.abs(data.lng-lng) < .0005 ) {
-              locationCrimeData.push(crimeData);
+            if (Math.abs(lat-data.lat) < TOLERANCE && Math.abs(data.lng-lng) < TOLERANCE ) {
+              showMarker = true;
               console.log(crimeData);
               
-              contentString += '<h1 id="firstHeading" class="firstHeading">' + `Crime Type: ${crimeData.offense_description}` + '</h1>'+
-                  '<div id="bodyContent">'+
-                  '<p><b>Crime Severity: ' + `${crimeData.severity}` + '</b>,'  +
-                  'Crime occured on date:' + `${crimeData.occurred_on_date} on a ${crimeData.day_of_week} `
-                  '</p>';
+              contentString += 
+                `<h3>Crime Type: ${crimeData.offense_description}</h3>` +
+                '<div>' +
+                `<p><b>Crime Severity: ${crimeData.severity}</b></p>` +
+                `<p>Crime occured on: ${moment(crimeData.occurred_on_date).format("dddd, MMMM Do YYYY, h:mm:ss a")}</p>`;
             }
           });
           
-          
-          contentString +='</div>'+'</div>';
+          contentString += '</div></div>';
           
           var infowindow = new google.maps.InfoWindow({
               content: contentString
           });
             
           // add a new marker to the current location
-          var marker = new google.maps.Marker({
-            position: e.latLng,
-            map: map,
-          });
+          if (showMarker) {
+            var marker = new google.maps.Marker({
+              position: e.latLng,
+              map: map
+            });
           
-          marker.addListener('click', function() {
-            infowindow.open(map, marker);
-          });
-          
+            marker.addListener('click', () => {
+              infowindow.open(map, marker);
+            });
+
+            activeMarkers.push(marker);
+          }
         });
 
         initAuthentication(initFirebase.bind(undefined, heatmap));
@@ -174,16 +186,16 @@
         var crimeLogDb = firebaseDb.ref('crimedata');
         var crimeTypeDb = firebaseDb.ref('analytics/offense_code_group');
         
-        crimeTypeDb.on('child_added', function(data) {
+        crimeTypeDb.on('child_added', data => {
           console.log(`crime_type: ${data.key}, count: ${data.val()}`);
         });
 
-        crimeTypeDb.on('child_removed', function(data) {
+        crimeTypeDb.on('child_removed', data => {
           console.log(`crime_type: ${data.key}, count: ${data.val()}`);
         });
         
-        crimeLogDb.on('value', function(snapshot) {
-          snapshot.forEach(function(childSnapshot) {
+        crimeLogDb.on('value', snapshot => {
+          snapshot.forEach(childSnapshot => {
             var childData = childSnapshot.val();
             var elapsed = 1 - ((new Date().getTime() - new Date(childData.occurred_on_date).getTime()) / 70000000000);
             console.log(elapsed);
@@ -196,21 +208,48 @@
             heatmap.getData().push(point);
             heatmap.aux.push(childData);
           });
+
+          // heatmap.aux.forEach(function(crimeData) {
+          //   var marker = new google.maps.Marker({
+          //       position: new google.maps.LatLng(crimeData.lat, crimeData.lng),
+          //       map: map
+          //   });
+
+          //   var contentString = 
+          //     '<div>'
+          //     '<h1>' + 
+          //     `Crime Type: ${crimeData.offense_description}` + 
+          //     '</h1>' +
+          //     '<div>' +
+          //     '<p>' +
+          //     `<b>Crime Severity: ${crimeData.severity}</b>,` +
+          //     `Crime occured on date: ${crimeData.occurred_on_date} on a ${crimeData.day_of_week}` +
+          //     '</p>' +
+          //     '</div>' + 
+          //     '</div>';
+
+          //   var infoWindow = new google.maps.InfoWindow({
+          //       content: contentString
+          //   });
+
+          //   marker.addListener("click", function() { 
+          //       infoWindow.open(map, marker);
+          //   });
+          // });
         });
 
         // Listener for when a click is added.
-        // clicks.orderByChild('timestamp').startAt(startTime).on('child_added',
-        //   function(snapshot) {
+        clicks.orderByChild('timestamp').startAt(startTime).on('child_added',
+          snapshot => {
+            // Get that click from firebase.
+            var newPosition = snapshot.val();
+            var point = new google.maps.LatLng(newPosition.lat, newPosition.lng);
+            var elapsed = new Date().getTime() - newPosition.timestamp;
 
-        //     // Get that click from firebase.
-        //     var newPosition = snapshot.val();
-        //     var point = new google.maps.LatLng(newPosition.lat, newPosition.lng);
-        //     var elapsed = new Date().getTime() - newPosition.timestamp;
-
-        //     // Add the point to the heatmap.
-        //     heatmap.getData().push(point);
-        //   }
-        // );
+            // Add the point to the heatmap.
+            heatmap.getData().push(point);
+          }
+        );
 
         // Remove old data from the heatmap when a point is removed from firebase.
         // clicks.on('child_removed', function(snapshot, prevChildKey) {
@@ -237,13 +276,13 @@
         ref.onDisconnect().remove();  // Delete reference from firebase on disconnect.
 
         // Set value to timestamp.
-        ref.set(firebase.database.ServerValue.TIMESTAMP, function(err) {
+        ref.set(firebase.database.ServerValue.TIMESTAMP, err => {
           if (err) {  // Write to last message was unsuccessful.
             console.log(err);
           } else {  // Write to last message was successful.
-            ref.once('value', function(snap) {
+            ref.once('value', snap => {
               addClick(snap.val());  // Add click with same timestamp.
-            }, function(err) {
+            }, err => {
               console.warn(err);
             });
           }
@@ -256,10 +295,10 @@
        *     It contains the lat, lng, sender and timestamp.
        */
       function addToFirebase(data) {
-        getTimestamp(function(timestamp) {
+        getTimestamp(timestamp => {
           // Add the new timestamp to the record data.
           data.timestamp = timestamp;
-          var ref = heatmapDb.child('clicks').push(data, function(err) {
+          var ref = heatmapDb.child('clicks').push(data, err => {
             if (err) {  // Data was not written to firebase.
               console.warn(err);
             }
