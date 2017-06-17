@@ -18,13 +18,20 @@
   <body>
     <div id="map"></div>
 
-    <script src="https://cdn.firebase.com/js/client/2.3.2/firebase.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.1.2/firebase.js"></script>
     <script>
-      /**
-      * Reference to Firebase database.
-      * @const
-      */
-      var firebase = new Firebase('https://hacking-for-good.firebaseio.com/');
+      // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyAHaFADvyAaajd3FP7SC5C-mPyVlsMhvgw",
+        authDomain: "hacking-for-good.firebaseapp.com",
+        databaseURL: "https://hacking-for-good.firebaseio.com",
+        projectId: "hacking-for-good",
+        storageBucket: "gs://hacking-for-good.appspot.com",
+        messagingSenderId: "695610956603"
+      };
+      firebase.initializeApp(config);
+
+      var firebaseDb = firebase.database().ref('heatmap');
 
       /**
       * Data object to be written to Firebase.
@@ -63,14 +70,27 @@
       * @param {function()} onAuthSuccess - Called when authentication succeeds.
       */
       function initAuthentication(onAuthSuccess) {
-        firebase.authAnonymously(function(error, authData) {
-          if (error) {
+        firebase.auth()
+          .signInAnonymously()
+          .then(onAuthSuccess())
+          .catch(function(error) {
             console.log('Login Failed!', error);
-          } else {
-            data.sender = authData.uid;
-            onAuthSuccess();
-          }
-        }, {remember: 'sessionOnly'});  // Users will get a new id for every session.
+          });
+      }
+
+      function getUserLocation() {
+        var loc = {lat: 0, lng: 0};
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            loc = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+          });
+        }
+
+        return loc;
       }
 
       /**
@@ -140,7 +160,7 @@
         var startTime = new Date().getTime() - (60 * 10 * 1000);
 
         // Reference to the clicks in Firebase.
-        var clicks = firebase.child('clicks');
+        var clicks = firebaseDb.child('clicks');
 
         // Listener for when a click is added.
         clicks.orderByChild('timestamp').startAt(startTime).on('child_added',
@@ -184,12 +204,12 @@
        */
       function getTimestamp(addClick) {
         // Reference to location for saving the last click time.
-        var ref = firebase.child('last_message/' + data.sender);
+        var ref = firebaseDb.child('last_message/' + data.sender);
 
         ref.onDisconnect().remove();  // Delete reference from firebase on disconnect.
 
         // Set value to timestamp.
-        ref.set(Firebase.ServerValue.TIMESTAMP, function(err) {
+        ref.set(firebase.database.ServerValue.TIMESTAMP, function(err) {
           if (err) {  // Write to last message was unsuccessful.
             console.log(err);
           } else {  // Write to last message was successful.
@@ -211,7 +231,7 @@
         getTimestamp(function(timestamp) {
           // Add the new timestamp to the record data.
           data.timestamp = timestamp;
-          var ref = firebase.child('clicks').push(data, function(err) {
+          var ref = firebaseDb.child('clicks').push(data, function(err) {
             if (err) {  // Data was not written to firebase.
               console.warn(err);
             }
