@@ -14,9 +14,11 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
     admin.database().ref('/crimedata').child('offense_code_group').orderByKey().once('value', snapshot => {
       console.log('Offense Code Group:', snapshot.key);
       if (result[snapshot.val()]) {
+        console.log('Incrementing', snapshot.val());
         result[snapshot.val()]+= 1;
       } else {
-        result[crimeSnapshot.val().offense_code_group] = 1;
+        console.log('Incrementing', snapshot.val());
+        result[snapshot.val()] = 1;
       }
     });
 
