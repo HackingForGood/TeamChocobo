@@ -185,12 +185,13 @@
         crimeLogDb.on('value', function(snapshot) {
           snapshot.forEach(function(childSnapshot) {
             var childData = childSnapshot.val();
+            var elapsed = 1 - ((new Date().getTime() - new Date(childData.occurred_on_date).getTime()) / 70000000000);
+            console.log(elapsed);
             if(typeof(childData.Severity) != "undefined"){
-              console.log(childData.Severity)
-              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:childData.Severity};
+              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:childData.Severity*elapsed};
             }
             else{
-              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:0.5};
+              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:0.5*elapsed};
             }
             heatmap.getData().push(point);
             heatmap.aux.push(childData);
