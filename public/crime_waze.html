@@ -45,6 +45,11 @@
         lng: null
       };
 
+      /**
+      * Keep track of markers on the map (to remove when out of focus)
+      */
+      var activeMarkers = [];
+
       function makeInfoBox(controlDiv, map) {
         // Set CSS for the control border.
         var controlUI = document.createElement('div');
@@ -113,6 +118,12 @@
 
         // Listen for clicks and add the location of the click to firebase.
         map.addListener('click', e => {
+          activeMarkers.forEach(marker => {
+            marker.setMap(null);
+            marker = null;
+          });
+          activeMarkers = [];
+
           data.lat = e.latLng.lat().toFixed(4);
           data.lng = e.latLng.lng().toFixed(4);
           
@@ -145,12 +156,14 @@
           if (showMarker) {
             var marker = new google.maps.Marker({
               position: e.latLng,
-              map: map,
+              map: map
             });
           
             marker.addListener('click', () => {
               infowindow.open(map, marker);
             });
+
+            activeMarkers.push(marker);
           }
         });
 
