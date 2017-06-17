@@ -16,23 +16,22 @@
     </style>
   </head>
   <body>
-    <div id='map'></div>
+    <div id="map"></div>
 
-    <script src='https://www.gstatic.com/firebasejs/4.1.2/firebase.js'></script>
+    <script src="https://www.gstatic.com/firebasejs/4.1.2/firebase.js"></script>
     <script>
       // Initialize Firebase
       var config = {
-        apiKey: 'AIzaSyAHaFADvyAaajd3FP7SC5C-mPyVlsMhvgw',
-        authDomain: 'hacking-for-good.firebaseapp.com',
-        databaseURL: 'https://hacking-for-good.firebaseio.com',
-        projectId: 'hacking-for-good',
-        storageBucket: 'gs://hacking-for-good.appspot.com',
-        messagingSenderId: '695610956603'
+        apiKey: "AIzaSyAHaFADvyAaajd3FP7SC5C-mPyVlsMhvgw",
+        authDomain: "hacking-for-good.firebaseapp.com",
+        databaseURL: "https://hacking-for-good.firebaseio.com",
+        projectId: "hacking-for-good",
+        storageBucket: "gs://hacking-for-good.appspot.com",
+        messagingSenderId: "695610956603"
       };
       firebase.initializeApp(config);
 
-      var firebaseDb = firebase.database();
-      var heatmapDb = firebaseDb.ref('heatmap');
+      var firebaseDb = firebase.database().ref('heatmap');
 
       /**
       * Data object to be written to Firebase.
@@ -47,7 +46,23 @@
       function makeInfoBox(controlDiv, map) {
         // Set CSS for the control border.
         var controlUI = document.createElement('div');
-        // controlDiv.appendChild(controlUI);
+        controlUI.style.boxShadow = 'rgba(0, 0, 0, 0.298039) 0px 1px 4px -1px';
+        controlUI.style.backgroundColor = '#fff';
+        controlUI.style.border = '2px solid #fff';
+        controlUI.style.borderRadius = '2px';
+        controlUI.style.marginBottom = '22px';
+        controlUI.style.marginTop = '10px';
+        controlUI.style.textAlign = 'center';
+        controlDiv.appendChild(controlUI);
+
+        // Set CSS for the control interior.
+        var controlText = document.createElement('div');
+        controlText.style.color = 'rgb(25,25,25)';
+        controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
+        controlText.style.fontSize = '100%';
+        controlText.style.padding = '6px';
+        controlText.textContent = 'The map shows all clicks made in the last 10 minutes.';
+        controlUI.appendChild(controlText);
       }
 
       /**
@@ -63,16 +78,31 @@
           });
       }
 
+      function getUserLocation() {
+        var loc = {lat: 0, lng: 0};
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            loc = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+          });
+        }
+
+        return loc;
+      }
+
       function init() {
         currLoc = {lat: 0, lng: 0};
 
-        if ('geolocation' in navigator) {
+        if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 currLoc = {lat: position.coords.latitude, lng: position.coords.longitude};
                 initMap(currLoc);
             });
         } else {
-            console.log('No geolocation services available on this device!');
+            console.log("No geolocation services available on this device!");
             initMap(currLoc);
         }
       }
@@ -102,57 +132,18 @@
         makeInfoBox(infoBoxDiv, map);
         map.controls[google.maps.ControlPosition.TOP_CENTER].push(infoBoxDiv);
 
+        // Listen for clicks and add the location of the click to firebase.
+        map.addListener('click', function(e) {
+          data.lat = e.latLng.lat();
+          data.lng = e.latLng.lng();
+          addToFirebase(data);
+        });
+
         // Create a heatmap.
         var heatmap = new google.maps.visualization.HeatmapLayer({
           data: [],
           map: map,
-          radius: 16,
-          aux: []
-        });
-
-        // Listen for clicks and add the location of the click to firebase.
-        map.addListener('click', function(e) {
-          var locationCrimeData = [];
-          
-          data.lat = e.latLng.lat().toFixed(4);
-          data.lng = e.latLng.lng().toFixed(4);
-          
-          var contentString = '<div id="content">'+
-          '<div id="siteNotice">'+
-          '</div>';
-          
-          heatmap.aux.forEach(crimeData => {
-            var lat = parseFloat(crimeData.lat).toFixed(4);
-            var lng = parseFloat(crimeData.long).toFixed(4);
-            if (Math.abs(lat-data.lat) < .0005 && Math.abs(data.lng-lng) < .0005 ) {
-              locationCrimeData.push(crimeData);
-              console.log(crimeData);
-              
-              contentString += '<h1 id="firstHeading" class="firstHeading">' + `Crime Type: ${crimeData.offense_description}` + '</h1>'+
-                  '<div id="bodyContent">'+
-                  '<p><b>Crime Severity: ' + `${crimeData.severity}` + '</b>,'  +
-                  'Crime occured on date:' + `${crimeData.occurred_on_date} on a ${crimeData.day_of_week} `
-                  '</p>';
-            }
-          });
-          
-          
-          contentString +='</div>'+'</div>';
-          
-          var infowindow = new google.maps.InfoWindow({
-              content: contentString
-          });
-            
-          // add a new marker to the current location
-          var marker = new google.maps.Marker({
-            position: e.latLng,
-            map: map,
-          });
-          
-          marker.addListener('click', function() {
-            infowindow.open(map, marker);
-          });
-          
+          radius: 16
         });
 
         initAuthentication(initFirebase.bind(undefined, heatmap));
@@ -169,59 +160,40 @@
         var startTime = new Date().getTime() - (60 * 10 * 1000);
 
         // Reference to the clicks in Firebase.
-        var clicks = heatmapDb.child('clicks');
-
-        var crimeLogDb = firebaseDb.ref('crimedata');
-        var crimeTypeDb = firebaseDb.ref('analytics/offense_code_group');
-        
-        crimeTypeDb.on('child_added', function(data) {
-          console.log(`crime_type: ${data.key}, count: ${data.val()}`);
-        });
-
-        crimeTypeDb.on('child_removed', function(data) {
-          console.log(`crime_type: ${data.key}, count: ${data.val()}`);
-        });
-        
-        crimeLogDb.on('value', function(snapshot) {
-          snapshot.forEach(function(childSnapshot) {
-            var childData = childSnapshot.val();
-            var elapsed = 1 - ((new Date().getTime() - new Date(childData.occurred_on_date).getTime()) / 70000000000);
-            console.log(elapsed);
-            if(typeof(childData.Severity) != "undefined"){
-              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:childData.Severity*elapsed};
-            }
-            else{
-              var point = {location : new google.maps.LatLng(childData.lat, childData.long), weight:0.5*elapsed};
-            }
-            heatmap.getData().push(point);
-            heatmap.aux.push(childData);
-          });
-        });
+        var clicks = firebaseDb.child('clicks');
 
         // Listener for when a click is added.
-        // clicks.orderByChild('timestamp').startAt(startTime).on('child_added',
-        //   function(snapshot) {
+        clicks.orderByChild('timestamp').startAt(startTime).on('child_added',
+          function(snapshot) {
 
-        //     // Get that click from firebase.
-        //     var newPosition = snapshot.val();
-        //     var point = new google.maps.LatLng(newPosition.lat, newPosition.lng);
-        //     var elapsed = new Date().getTime() - newPosition.timestamp;
+            // Get that click from firebase.
+            var newPosition = snapshot.val();
+            var point = new google.maps.LatLng(newPosition.lat, newPosition.lng);
+            var elapsed = new Date().getTime() - newPosition.timestamp;
 
-        //     // Add the point to the heatmap.
-        //     heatmap.getData().push(point);
-        //   }
-        // );
+            // Add the point to  the heatmap.
+            heatmap.getData().push(point);
+
+            // Requests entries older than expiry time (10 minutes).
+            var expirySeconds = Math.max(60 * 10 * 1000 - elapsed, 0);
+            // Set client timeout to remove the point after a certain time.
+            window.setTimeout(function() {
+              // Delete the old point from the database.
+              snapshot.ref().remove();
+            }, expirySeconds);
+          }
+        );
 
         // Remove old data from the heatmap when a point is removed from firebase.
-        // clicks.on('child_removed', function(snapshot, prevChildKey) {
-        //   var heatmapData = heatmap.getData();
-        //   var i = 0;
-        //   while (snapshot.val().lat != heatmapData.getAt(i).lat()
-        //     || snapshot.val().lng != heatmapData.getAt(i).lng()) {
-        //     i++;
-        //   }
-        //   heatmapData.removeAt(i);
-        // });
+        clicks.on('child_removed', function(snapshot, prevChildKey) {
+          var heatmapData = heatmap.getData();
+          var i = 0;
+          while (snapshot.val().lat != heatmapData.getAt(i).lat()
+            || snapshot.val().lng != heatmapData.getAt(i).lng()) {
+            i++;
+          }
+          heatmapData.removeAt(i);
+        });
       }
 
       /**
@@ -232,7 +204,7 @@
        */
       function getTimestamp(addClick) {
         // Reference to location for saving the last click time.
-        var ref = heatmapDb.child('last_message/' + data.sender);
+        var ref = firebaseDb.child('last_message/' + data.sender);
 
         ref.onDisconnect().remove();  // Delete reference from firebase on disconnect.
 
@@ -259,7 +231,7 @@
         getTimestamp(function(timestamp) {
           // Add the new timestamp to the record data.
           data.timestamp = timestamp;
-          var ref = heatmapDb.child('clicks').push(data, function(err) {
+          var ref = firebaseDb.child('clicks').push(data, function(err) {
             if (err) {  // Data was not written to firebase.
               console.warn(err);
             }
@@ -268,7 +240,7 @@
       }
     </script>
     <script async defer
-        src='https://maps.googleapis.com/maps/api/js?key=AIzaSyBqHi1Rm_zz88oSFE0WMJizhl4Qv1p--Jo&libraries=visualization&callback=init'>
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqHi1Rm_zz88oSFE0WMJizhl4Qv1p--Jo&libraries=visualization&callback=init">
     </script>
   </body>
 </html>
