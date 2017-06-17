@@ -18,7 +18,7 @@ exports.computeCrimePercentages = functions.database.ref('crimedata/{pushId}/off
 
     var dbPath = 'analytics/offense_code_group/' + event.data.val();
     console.log('Grabbing reference to:', dbPath);
-    var ocgRef = db.ref(dbPath);
+    var ocgRef = admin.database().ref(dbPath);
     return ocgRef.transaction(current_value => {
       return (current_value || 0) + 1;
     });
