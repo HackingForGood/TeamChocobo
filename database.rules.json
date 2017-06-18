@@ -6,6 +6,11 @@
     	"clicks": {
     		".indexOn": ["timestamp"]
     	}
+    },
+    "crimedata": {
+    	"$crimedata_id": {
+    		".indexOn": ["incident_number", "offense_code_group"]
+    	}
     }
   }
 }
