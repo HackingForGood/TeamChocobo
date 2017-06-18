@@ -3,14 +3,12 @@
     ".read": "auth != null",
     ".write": "auth != null",
     "heatmap": {
-    	"clicks": {
-    		".indexOn": ["timestamp"]
-    	}
+        "clicks": {
+            ".indexOn": ["timestamp"]
+        }
     },
     "crimedata": {
-    	"$crimedata_id": {
-    		".indexOn": ["incident_number", "offense_code_group"]
-    	}
+        ".indexOn": ["incident_number", "offense_code_group"]
     }
   }
 }
